@@ -289,6 +289,26 @@ class VehicleController {
         data.pdf_file = newPdfFileName;
       }
 
+      const numericFields = [
+        "id_type",
+        "id_brand",
+        "id_model",
+        "id_capacity",
+        "id_box",
+        "id_mass",
+        "id_bucket",
+      ];
+      numericFields.forEach((field) => {
+        if (data[field] === "" || data[field] === undefined) {
+          data[field] = null;
+        } else {
+          data[field] = Number(data[field]);
+          if (isNaN(data[field])) {
+            data[field] = null;
+          }
+        }
+      });
+
       const result = await VehicleService.updateVehicleById(
         Number(id_vehicle),
         data

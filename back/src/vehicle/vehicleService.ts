@@ -426,6 +426,8 @@ async function updateVehicleById(id_vehicle: number, data: any) {
   }
 }
 
+
+
 const VehicleService = {
   create,
   getVehicleById,

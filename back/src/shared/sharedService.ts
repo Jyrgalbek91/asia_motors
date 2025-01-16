@@ -66,6 +66,46 @@ async function getVehicleType() {
   }
 }
 
+async function getMassType() {
+  try {
+    const { rows, error } = await db.query(`SELECT * FROM mass;`, []);
+    return error ? false : rows;
+  } catch (error) {
+    console.log("error getMassType: ", error.message);
+    return false;
+  }
+}
+
+async function getBucketType() {
+  try {
+    const { rows, error } = await db.query(`SELECT * FROM bucket;`, []);
+    return error ? false : rows;
+  } catch (error) {
+    console.log("error getBucketType: ", error.message);
+    return false;
+  }
+}
+
+async function getFuelType() {
+  try {
+    const { rows, error } = await db.query(`SELECT * FROM fuel;`, []);
+    return error ? false : rows;
+  } catch (error) {
+    console.log("error getFuelType: ", error.message);
+    return false;
+  }
+}
+
+async function getPowerType() {
+  try {
+    const { rows, error } = await db.query(`SELECT * FROM power;`, []);
+    return error ? false : rows;
+  } catch (error) {
+    console.log("error getPowerType: ", error.message);
+    return false;
+  }
+}
+
 export default {
   getBrand,
   getModel,
@@ -73,4 +113,8 @@ export default {
   getBox,
   getPostType,
   getVehicleType,
+  getMassType,
+  getBucketType,
+  getFuelType,
+  getPowerType,
 };
