@@ -51,6 +51,7 @@ class UserController {
       return sendError(res, req.t("error"), false, 400);
     }
   }
+<<<<<<< HEAD
 
   async recourse(req: Request, res: Response) {
     try {
@@ -165,6 +166,8 @@ class UserController {
       return false;
     }
   }
+=======
+>>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
 }
 
 export default new UserController();

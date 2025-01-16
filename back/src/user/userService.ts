@@ -26,6 +26,7 @@ async function userLogin(login: ILogin, password: string) {
   }
 }
 
+<<<<<<< HEAD
 async function saveRecourse(
   name: string,
   phone: string,
@@ -176,6 +177,10 @@ const UserService = {
   saveFeedback,
   getAllFeedback,
   getFeedbackById,
+=======
+const UserService = {
+  userLogin,
+>>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
 };
 
 export default UserService;

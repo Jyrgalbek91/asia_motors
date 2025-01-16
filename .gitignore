@@ -4,4 +4,8 @@
 *.sh
 /pdf_files
 /post_images
+<<<<<<< HEAD
 /vehicle_images
+=======
+/vehicle_images
+>>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c

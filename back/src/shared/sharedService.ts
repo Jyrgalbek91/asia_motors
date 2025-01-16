@@ -1,5 +1,6 @@
 import db from "../utils/db";
 
+<<<<<<< HEAD
 async function getBrand(id_type: number) {
   try {
     const { rows, error } = await db.query(
@@ -102,11 +103,23 @@ async function getPowerType() {
     return error ? false : rows;
   } catch (error) {
     console.log("error getPowerType: ", error.message);
+=======
+async function getCitizenship() {
+  try {
+    const { rows, error } = await db.query(
+      `SELECT * FROM fn_citizenship();`,
+      []
+    );
+    return error ? false : rows;
+  } catch (error) {
+    console.log("error getCitizenship: ", error.message);
+>>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
     return false;
   }
 }
 
 export default {
+<<<<<<< HEAD
   getBrand,
   getModel,
   getCapacity,
@@ -117,4 +130,7 @@ export default {
   getBucketType,
   getFuelType,
   getPowerType,
+=======
+  getCitizenship,
+>>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
 };
