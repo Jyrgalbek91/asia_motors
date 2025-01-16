@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import sharedService from "./sharedService";
-<<<<<<< HEAD
-
 class SharedController {
   async getBrandController(req: Request, res: Response) {
     try {
@@ -113,19 +111,6 @@ class SharedController {
         : res.status(404).json({ message: "Ошибка" });
     } catch (error) {
       return res.status(500).json({ message: "Ошибка сервера" });
-=======
-import { sendError, sendSuccess } from "../utils/send";
-
-class SharedController {
-  async citizenshipList(req: Request, res: Response) {
-    try {
-      const data = await sharedService.getCitizenship();
-      return data
-        ? sendSuccess(res, req.t("success"), data)
-        : sendError(res, req.t("error"));
-    } catch (error) {
-      return sendError(res, req.t("error"));
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
     }
   }
 }

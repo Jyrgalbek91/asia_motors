@@ -1,11 +1,7 @@
 import { Request, Response } from "express";
 import PostService from "./postService";
 import validate from "../utils/validate";
-<<<<<<< HEAD
-import newsSchema from "./postSchema";
-=======
 import postSchema from "./postSchema";
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
 import FileService from "../services/FileService";
 import Config from "../utils/config";
 import File from "../utils/file";
@@ -60,11 +56,7 @@ class PostController {
 
   async createController(req: Request, res: Response) {
     try {
-<<<<<<< HEAD
-      const isValid = validate(req.body, newsSchema.postSchema);
-=======
       const isValid = validate(req.body, postSchema.postSchema);
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
       if (!isValid) return res.status(400).json({ message: "Неверный формат" });
 
       const { id_type, title, description, images } = req.body;
@@ -202,16 +194,8 @@ class PostController {
 
   async similarArticlesController(req: Request, res: Response) {
     try {
-<<<<<<< HEAD
       const { id_type, title } = req.query;
-      const data = await PostService.similarArticles(
-        Number(id_type),
-        String(title)
-      );
-=======
-      const { title } = req.query;
-      const data = await PostService.similarArticles(String(title));
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
+      const data = await PostService.similarArticles(Number(id_type), String(title));
       return data
         ? res.status(200).json({ message: "Успешно", data })
         : res.status(400).json({ message: "Ошибка" });

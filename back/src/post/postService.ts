@@ -229,11 +229,7 @@ async function updatePostById(id_post: number, data: any) {
   }
 }
 
-<<<<<<< HEAD
 async function similarArticles(id_type: number, title: string): Promise<any> {
-=======
-async function similarArticles(title: string): Promise<any> {
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
   try {
     const keywords = title
       .replace(/[^\w\sа-яА-Я]/g, '') 
@@ -252,21 +248,12 @@ async function similarArticles(title: string): Promise<any> {
               ARRAY_AGG(JSON_BUILD_OBJECT('id', i.id_image, 'image_name', i.image_name)) AS images
        FROM post p
        JOIN image i ON p.id = i.id_post
-<<<<<<< HEAD
        WHERE p.id_type = $1 
          AND p.tsv_content @@ to_tsquery('russian', $2)
        GROUP BY p.id, p.id_type, p.title, p.description, p."date", p.updated_at, p.active
        ORDER BY ts_rank(p.tsv_content, to_tsquery('russian', $2)) DESC
        LIMIT 3;`,
       [id_type, keywords]
-=======
-       WHERE p.id_type = 1 
-         AND p.tsv_content @@ to_tsquery('russian', $1)
-       GROUP BY p.id, p.id_type, p.title, p.description, p."date", p.updated_at, p.active
-       ORDER BY ts_rank(p.tsv_content, to_tsquery('russian', $1)) DESC
-       LIMIT 3;`,
-      [keywords]
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
     );
 
     return rows.map((post: any) => ({

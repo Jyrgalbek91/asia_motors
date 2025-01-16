@@ -1,17 +1,5 @@
 import fs from "fs";
 
-<<<<<<< HEAD
-const exists = async (filePath: string) => {
-  console.log('Параметр filePath:', filePath);  // Логируем параметр
-  return !!(await fs.promises.stat(filePath).catch((e) => {
-    if (process.env.DEBUG_MODE === "true") {
-      console.debug(e);  // Логируем ошибку, если DEBUG_MODE включен
-    }
-    return false;
-  }));
-};
-
-=======
 const exists = async (filePath: string) =>
   !!(await fs.promises.stat(filePath).catch((e) => {
     if (process.env.DEBUG_MODE === "true") {
@@ -19,7 +7,6 @@ const exists = async (filePath: string) =>
     }
     return false;
   }));
->>>>>>> da1adc4818c7c1b2b4d8a755e22524c4f2dac49c
 
 const deleteFile = async (filePath: string) =>
   await fs.promises.unlink(filePath).catch((e) => {
