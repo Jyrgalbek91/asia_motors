@@ -2,6 +2,6 @@
 *dist
 *.env
 *.sh
-/postFiles
-/pdfFiles
-/vehicleFiles
+/pdf_files
+/post_images
+/vehicle_images
