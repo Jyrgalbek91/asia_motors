@@ -1,0 +1,19 @@
+stages:
+ - deploy-dev
+
+deploy-local-back:
+ stage: deploy-dev
+ environment:
+    name: dev
+    url: https://gitlab.edu.gov.kg
+ tags:
+   - dev
+ needs: [] 
+ rules:
+ - changes:
+   - $GIT_BACK_PATH/$BUILD_FILE_NAME
+ script:
+ - echo "Deploying to $LOCAL_DEV_DEPLOY_SERVER"
+ - cp $GIT_BACK_PATH/$BUILD_FILE_NAME $LOCAL_DEV_PROJECT_PATH
+ - cp $GIT_BACK_PATH/package.json $LOCAL_DEV_PROJECT_PATH
+ - cd $LOCAL_DEV_PROJECT_PATH && npm install && pm2 restart $APP_NAME
