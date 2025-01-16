@@ -2,4 +2,6 @@
 *dist
 *.env
 *.sh
-/newsFiles
+/pdf_files
+/post_images
+/vehicle_images
