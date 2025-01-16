@@ -4,10 +4,15 @@ import VehicleController from "./vehicleController";
 
 const router = express.Router();
 
+// router.post(
+//   "/create",
+//   CheckService.isAdminToken,
+//   VehicleController.createController
+// );
 router.post(
   "/create",
   CheckService.isAdminToken,
-  VehicleController.createController
+  VehicleController.create
 );
 router.get("/get/id", VehicleController.getVehicleByIdController);
 router.get("/get/:id", VehicleController.getAllVehicleController);

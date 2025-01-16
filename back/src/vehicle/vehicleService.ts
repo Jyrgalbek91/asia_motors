@@ -426,7 +426,46 @@ async function updateVehicleById(id_vehicle: number, data: any) {
   }
 }
 
+async function saveVehicle(
+  id_type: number,
+  id_brand: number,
+  id_model: number,
+  id_capacity: number | null,
+  id_box: number | null,
+  description: string,
+  id_mass: number | null,
+  id_bucket: number | null,
+  id_fuel: number | null,
+  id_power: number | null
+) {
+  try {
+    const result_message = "";
+    const { error, rows } = await db.query(
+      `CALL p_insert_vehicle($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
+      [
+        id_type,
+        id_brand,
+        id_model,
+        id_capacity ?? null,
+        id_box ?? null,
+        description,
+        id_mass ?? null,
+        id_bucket ?? null,
+        id_fuel ?? null,
+        id_power ?? null,
+        result_message,
+      ]
+    );
+    if (error) {
+      return false;
+    }
 
+    return rows;
+  } catch (error: any) {
+    console.error("Error in saveVehicle:", error.message);
+    return false;
+  }
+}
 
 const VehicleService = {
   create,
@@ -434,6 +473,7 @@ const VehicleService = {
   getAllVehicles,
   deleteVehicleById,
   updateVehicleById,
+  saveVehicle,
 };
 
 export default VehicleService;
