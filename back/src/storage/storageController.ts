@@ -11,7 +11,7 @@ class StorageController {
     try {
       const { vehicle_name } = req.query;
 
-      const pdfFile = req.files?.pdf_file;
+      const pdfFile = req.files?.file_name;
       if (!pdfFile)
         return res.status(400).json({ message: "Файл отсутствует" });
 
@@ -108,6 +108,7 @@ class StorageController {
 
   async deleteStorageController(req: Request, res: Response) {
     const { id_file } = req.params;
+    console.log(id_file);
 
     if (isNaN(Number(id_file))) {
       return res.status(400).json({ message: "Неверный формат ID" });
@@ -119,6 +120,20 @@ class StorageController {
       return res.status(200).json({ message: "Успешно удалено" });
     } else {
       return res.status(500).json({ message: "Ошибка при удалении" });
+    }
+  }
+
+  async getFilesController(req: Request, res: Response) {
+    try {
+      const { vehicle_name } = req.query;
+      const data = await StorageService.getFiles(String(vehicle_name));
+
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка получения файла" });
+    } catch (error) {
+      console.log("error getFilesController: ", error.message);
+      return false;
     }
   }
 }

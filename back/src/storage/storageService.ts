@@ -4,6 +4,8 @@ import fs from "fs";
 import Config from "../utils/config";
 
 const PDF_FILE_PATH = Config.PDF_FILE_PATH;
+const ALLOW_HOST = Config.ALLOW_HOST;
+const PDF_FILE_URL = Config.PDF_FILE_URL;
 
 async function saveFiles(vehicle_name: string, file_name: string) {
   try {
@@ -77,10 +79,31 @@ async function deleteStorageById(id_file: number) {
   }
 }
 
+async function getFiles(vehicle_name: string) {
+  try {
+    const { error, rows } = await db.query(
+      `SELECT id_file, file_name FROM files
+       WHERE vehicle_name = $1;`,
+      [vehicle_name]
+    );
+    if (error) return false;
+
+    const data = rows.map((row) => ({
+      ...row,
+      file_name: `${ALLOW_HOST}${PDF_FILE_URL}${row.file_name}`,
+    }));
+    return data;
+  } catch (error) {
+    console.log("error getFiles: ", error.message);
+    return false;
+  }
+}
+
 const StorageService = {
   saveFiles,
   updateFiles,
   deleteStorageById,
+  getFiles,
 };
 
 export default StorageService;
