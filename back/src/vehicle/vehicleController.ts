@@ -132,7 +132,7 @@ class VehicleController {
         id_capacity,
         id_box,
         id_mass,
-        id_bucket
+        id_bucket,
       } = req.query;
 
       const idType = Number(id);
@@ -337,7 +337,9 @@ class VehicleController {
         id_mass,
         id_bucket,
         id_fuel,
-        id_power
+        id_body,
+        power,
+        color,
       } = req.body;
 
       const id_capacityValue = id_capacity === "" ? null : id_capacity;
@@ -345,7 +347,9 @@ class VehicleController {
       const id_massValue = id_mass === "" ? null : id_mass;
       const id_bucketValue = id_bucket === "" ? null : id_bucket;
       const id_fuelValue = id_fuel === "" ? null : id_fuel;
-      const id_powerValue = id_power === "" ? null : id_power;
+      const id_bodyValue = id_body === "" ? null : id_body;
+      const powerValue = power === "" ? null : power;
+      const colorValue = color === "" ? null : color;
 
       const idUser = Number(req.user?.id);
       if (!idUser) {
@@ -362,7 +366,9 @@ class VehicleController {
         id_massValue,
         id_bucketValue,
         id_fuelValue,
-        id_powerValue
+        id_bodyValue,
+        powerValue,
+        colorValue
       );
 
       if (!result) {
@@ -381,19 +387,58 @@ class VehicleController {
   async update(req: Request, res: Response) {
     try {
       const { id_vehicle } = req.params;
-      const data = req.body;
+      const {
+        id_type,
+        id_brand,
+        id_model,
+        id_capacity,
+        id_box,
+        description,
+        id_mass,
+        id_bucket,
+        id_fuel,
+        id_body,
+        power,
+        color,
+        active,
+      } = req.body;
 
       if (isNaN(Number(id_vehicle))) {
         return res.status(400).json({ message: "Неверный формат ID" });
       }
 
-      if (typeof data.images_to_delete === "string") {
-        data.images_to_delete = data.images_to_delete
-          .split(",")
-          .map((id: string) => Number(id.trim()))
-          .filter((id: number) => !isNaN(id));
-      }
+      const result = await VehicleService.updateVehicle(
+        Number(id_vehicle),
+        id_type,
+        id_brand,
+        id_model,
+        id_capacity,
+        id_box,
+        description,
+        id_mass,
+        id_bucket,
+        id_fuel,
+        id_body,
+        power,
+        color,
+        active
+      );
 
+      if (result) {
+        return res.status(200).json({ message: "Успешно обновлено" });
+      } else {
+        return res.status(500).json({ message: "Ошибка обновления" });
+      }
+    } catch (error) {
+      console.error("Error in updateVehicle:", error.message);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async addImageController(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { images } = req.body;
       const uploadedImages: string[] = [];
 
       if (req.files && req.files.images) {
@@ -410,84 +455,102 @@ class VehicleController {
           });
 
           if (result.error) {
-            return res
-              .status(400)
-              .json({ message: "Ошибка загрузки изображения" });
+            return res.status(400).json({ message: "Ошибка загрузки файла" });
           }
 
           uploadedImages.push(result.dbFileName);
         }
       }
-
-      let newPdfFileName: string | null = null;
-      const pdfFile = req.files?.pdf_file;
-
-      if (pdfFile) {
-        const pdfFileName = Array.isArray(pdfFile)
-          ? pdfFile[0].name
-          : pdfFile.name;
-
-        const { dbFileName, error } = await FileService.saveFile({
-          path: PDF_FILE_PATH,
-          fileName: pdfFileName,
-          sampleFile: Array.isArray(pdfFile) ? pdfFile[0] : pdfFile,
-          type: "file",
-          allowTypePrefix: false,
-        });
-
-        if (error) {
-          return res
-            .status(400)
-            .json({ message: "Ошибка обновления PDF-файла" });
-        }
-
-        newPdfFileName = dbFileName;
-      }
-
-      data.images = uploadedImages.map((imageName) => ({
-        image_name: imageName,
-      }));
-
-      if (newPdfFileName) {
-        data.pdf_file = newPdfFileName;
-      }
-
-      const numericFields = [
-        "id_type",
-        "id_brand",
-        "id_model",
-        "id_capacity",
-        "id_box",
-        "id_mass",
-        "id_bucket",
-      ];
-      numericFields.forEach((field) => {
-        if (data[field] === "" || data[field] === undefined) {
-          data[field] = null;
-        } else {
-          data[field] = Number(data[field]);
-          if (isNaN(data[field])) {
-            data[field] = null;
-          }
-        }
-      });
-
-      const result = await VehicleService.updateVehicleById(
-        Number(id_vehicle),
-        data
+      const result = await VehicleService.addImage(
+        Number(id),
+        uploadedImages.length > 0 ? uploadedImages : images
       );
-
-      if (result) {
-        return res.status(200).json({ message: "Успешно обновлено" });
-      } else {
-        return res.status(500).json({ message: "Ошибка обновления" });
+      if (!result) {
+        return res
+          .status(404)
+          .json({ message: "Ошибка создания транспортных средств" });
       }
+
+      return res.status(200).json({ message: "Успешно создано", result });
     } catch (error) {
-      console.error("Error in updateVehicle:", error.message);
-      return res.status(500).json({ message: "Internal server error" });
+      console.error("Ошибка в createController: ", error.message);
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 
+  async addFileController(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const pdfFile = req.files?.pdf_file;
+      if (!pdfFile)
+        return res.status(400).json({ message: "Файл отсутствует" });
+
+      const pdfFileName = Array.isArray(pdfFile)
+        ? pdfFile[0].name
+        : pdfFile.name;
+
+      const { dbFileName, error } = await FileService.saveFile({
+        path: PDF_FILE_PATH,
+        fileName: pdfFileName,
+        sampleFile: Array.isArray(pdfFile) ? pdfFile[0] : pdfFile,
+        type: "file",
+        allowTypePrefix: false,
+      });
+      if (error)
+        return res.status(400).json({ message: "Не удалось сохранить файл" });
+
+      const result = await VehicleService.addFiles(Number(id), dbFileName);
+
+      if (!result) {
+        return res
+          .status(404)
+          .json({ message: "Ошибка создания транспортных средств" });
+      }
+
+      return res.status(200).json({ message: "Успешно создано", result });
+    } catch (error) {
+      console.error("Ошибка в createController: ", error.message);
+      return res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
+
+  async deleteImage(req: Request, res: Response) {
+    const { id_image } = req.params;
+
+    if (isNaN(Number(id_image))) {
+      return res.status(400).json({ message: "Неверный формат ID" });
+    }
+
+    const result = await VehicleService.deleteImage(Number(id_image));
+
+    if (result) {
+      return res.status(200).json({ message: "Успешно удалено" });
+    } else {
+      return res.status(500).json({ message: "Ошибка при удалении" });
+    }
+  }
+
+  async deleteFile(req: Request, res: Response) {
+    try {
+      const { id_vehicle } = req.params;
+
+      if (isNaN(Number(id_vehicle))) {
+        return res.status(400).json({ message: "Неверный формат ID" });
+      }
+      const result = await VehicleService.deleteFile(Number(id_vehicle));
+
+      if (result) {
+        return res.status(200).json({ message: "Файл успешно удалён" });
+      } else {
+        return res
+          .status(404)
+          .json({ message: "Файл не найден или не существует" });
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      return res.status(500).json({ message: "Ошибка при удалении файла" });
+    }
+  }
 }
 
 export default new VehicleController();

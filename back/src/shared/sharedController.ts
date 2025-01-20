@@ -4,7 +4,9 @@ class SharedController {
   async getBrandController(req: Request, res: Response) {
     try {
       const { id_type } = req.query;
-      const data = await sharedService.getBrand(Number(id_type));
+  
+      const data = await sharedService.getBrand(id_type ? Number(id_type) : undefined);
+  
       return data
         ? res.status(200).json({ message: "Успешно", data })
         : res.status(404).json({ message: "Ошибка" });
@@ -12,6 +14,7 @@ class SharedController {
       return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
+  
 
   async getModelController(req: Request, res: Response) {
     try {
@@ -106,6 +109,17 @@ class SharedController {
   async getPowerController(_req: Request, res: Response) {
     try {
       const data = await sharedService.getPowerType();
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(404).json({ message: "Ошибка" });
+    } catch (error) {
+      return res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
+
+  async getBodyController(_req: Request, res: Response) {
+    try {
+      const data = await sharedService.getBodyType();
       return data
         ? res.status(200).json({ message: "Успешно", data })
         : res.status(404).json({ message: "Ошибка" });

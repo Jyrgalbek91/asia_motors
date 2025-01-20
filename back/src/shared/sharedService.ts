@@ -1,11 +1,16 @@
 import db from "../utils/db";
 
-async function getBrand(id_type: number) {
+async function getBrand(id_type?: number) {
   try {
-    const { rows, error } = await db.query(
-      `SELECT id_brand, brand_name FROM brand WHERE id_type = $1;`,
-      [id_type]
-    );
+    let query = `SELECT id_brand, brand_name FROM brand`;
+    const params: any[] = [];
+
+    if (id_type) {
+      query += ` WHERE id_type = $1`;
+      params.push(id_type);
+    }
+
+    const { rows, error } = await db.query(query, params);
     return error ? false : rows;
   } catch (error) {
     console.log("error getBrand: ", error.message);
@@ -106,6 +111,16 @@ async function getPowerType() {
   }
 }
 
+async function getBodyType() {
+  try {
+    const { rows, error } = await db.query(`SELECT * FROM body;`, []);
+    return error ? false : rows;
+  } catch (error) {
+    console.log("error getBodyType: ", error.message);
+    return false;
+  }
+}
+
 const SharedService = {
   getBrand,
   getModel,
@@ -117,6 +132,7 @@ const SharedService = {
   getBucketType,
   getFuelType,
   getPowerType,
+  getBodyType,
 };
 
 export default SharedService;

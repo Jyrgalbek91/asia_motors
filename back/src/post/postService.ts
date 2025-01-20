@@ -61,6 +61,20 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
     const limit = offset;
     const offsetValue = (page - 1) * offset;
 
+    const { error: countError, rows: countRows } = await db.query(
+      `SELECT COUNT(*) AS total
+       FROM post 
+       WHERE active = true
+         AND id_type = $1;`,
+      [id_type]
+    );
+
+    if (countError || countRows.length === 0) {
+      return false;
+    }
+
+    const total = parseInt(countRows[0].total, 10);
+
     const { error, rows } = await db.query(
       `SELECT 
           p.id, 
@@ -73,7 +87,7 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
           p.active,
           ARRAY_AGG(JSON_BUILD_OBJECT('id', i.id_image, 'image_name', i.image_name)) AS images
         FROM post p
-        JOIN image i ON i.id_post = p.id
+        LEFT JOIN image i ON i.id_post = p.id
         JOIN post_type pt ON pt.id_post_type = p.id_type
         WHERE p.active = true
           AND p.id_type = $1
@@ -87,7 +101,7 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
       return false;
     }
 
-    return rows.map((post: any) => ({
+    const posts = rows.map((post: any) => ({
       ...post,
       images: post.images.map((image: any) => ({
         ...image,
@@ -96,6 +110,13 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
           : null,
       })),
     }));
+
+    return {
+      data: posts,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
   } catch (error) {
     console.log("error getAllPosts: ", error.message);
     return false;
@@ -158,8 +179,7 @@ async function deletePostById(id_post: number) {
 
 async function updatePostById(id_post: number, data: any) {
   try {
-    const { title, description, id_type, images_to_delete, images } = data;
-    const active = true;
+    const { title, description, id_type, images_to_delete, images, active } = data;
 
     let updateFields: string[] = [];
     let updateValues: any[] = [];
@@ -177,17 +197,15 @@ async function updatePostById(id_post: number, data: any) {
       updateValues.push(id_type);
     }
 
-    updateFields.push(`active = $${updateValues.length + 1}`);
-    updateValues.push(active);
+    const activeValue = active === 'false' ? false : active || true;
 
-    updateFields.push(`updated_at = NOW()`);
+    updateFields.push(`active = $${updateValues.length + 1}`);
+    updateValues.push(activeValue);
 
     if (updateFields.length > 0) {
       await db.query(
-        `UPDATE post SET ${updateFields.join(", ")} WHERE id = $${
-          updateValues.length + 1
-        }`,
-        [...updateValues, id_post]
+        `UPDATE post SET ${updateFields.join(", ")} WHERE id = $${updateValues.length + 1}`,
+        [...updateValues, id_post] 
       );
     }
 
@@ -229,7 +247,7 @@ async function updatePostById(id_post: number, data: any) {
   }
 }
 
-async function similarArticles(id_type: number, title: string): Promise<any> {
+async function similarArticles(id_type: number, title: string, currentPostId: number): Promise<any> {
   try {
     const keywords = title
       .replace(/[^\w\sа-яА-Я]/g, '') 
@@ -250,10 +268,11 @@ async function similarArticles(id_type: number, title: string): Promise<any> {
        JOIN image i ON p.id = i.id_post
        WHERE p.id_type = $1 
          AND p.tsv_content @@ to_tsquery('russian', $2)
+         AND p.id != $3
        GROUP BY p.id, p.id_type, p.title, p.description, p."date", p.updated_at, p.active
        ORDER BY ts_rank(p.tsv_content, to_tsquery('russian', $2)) DESC
        LIMIT 3;`,
-      [id_type, keywords]
+      [id_type, keywords, currentPostId]
     );
 
     return rows.map((post: any) => ({

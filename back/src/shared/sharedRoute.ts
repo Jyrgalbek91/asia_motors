@@ -10,8 +10,9 @@ router.get("/box", SharedController.getBoxController);
 router.get("/post-type", SharedController.getPostTypeController);
 router.get("/vehicle-type", SharedController.getVehicleTypeController);
 router.get("/exp-mass", SharedController.getMassController);
-router.get("/bucket-volume", SharedController.getMassController);
+router.get("/bucket-volume", SharedController.getBucketController);
 router.get("/fuel", SharedController.getFuelController);
 router.get("/power", SharedController.getPowerController);
+router.get("/body", SharedController.getBodyController);
 
 export default router;

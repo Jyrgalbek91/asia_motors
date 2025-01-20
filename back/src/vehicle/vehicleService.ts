@@ -70,6 +70,12 @@ async function getVehicleById(id_vehicle: number) {
          ms.mass_name,
          v.id_bucket,
          bc.bucket_name,
+         v.id_fuel,
+         f.fuel_name,
+         v.id_body,
+         bd.body_name,
+         v.power,
+         v.color,
          v.description, 
          v.date, 
          v.updated_at, 
@@ -77,14 +83,16 @@ async function getVehicleById(id_vehicle: number) {
          g.id_image, 
          g.image_name 
        FROM vehicle v 
-       JOIN image g ON v.id = g.id_vehicle
-       JOIN vehicle_type vt ON vt.id_vehicle_type = v.id_type
-       JOIN brand b USING(id_brand)
-       JOIN model m USING(id_model)
-       JOIN capacity c USING(id_capacity)
-       JOIN box bx USING(id_box)
-       JOIN mass ms USING(id_mass)
-       JOIN bucket bc USING(id_bucket)
+       LEFT JOIN image g ON v.id = g.id_vehicle
+       LEFT JOIN vehicle_type vt ON vt.id_vehicle_type = v.id_type
+       LEFT JOIN brand b USING(id_brand)
+       LEFT JOIN model m USING(id_model)
+       LEFT JOIN capacity c USING(id_capacity)
+       LEFT JOIN box bx USING(id_box)
+       LEFT JOIN mass ms USING(id_mass)
+       LEFT JOIN bucket bc USING(id_bucket)
+       LEFT JOIN fuel f USING(id_fuel)
+       LEFT JOIN body bd USING(id_body)
        WHERE v.id = $1;`,
       [id_vehicle]
     );
@@ -109,6 +117,12 @@ async function getVehicleById(id_vehicle: number) {
       mass_name: rows[0].mass_name,
       id_bucket: rows[0].id_bucket,
       bucket_name: rows[0].bucket_name,
+      id_fuel: rows[0].id_fuel,
+      fuel_name: rows[0].fuel_name,
+      id_body: rows[0].id_body,
+      body_name: rows[0].body_name,
+      power: rows[0].power,
+      color: rows[0].color,
       description: rows[0].description,
       date: rows[0].date,
       updated_at: rows[0].updated_at,
@@ -162,6 +176,12 @@ async function getAllVehicles(
         mas.mass_name,
         v.id_bucket,
         buck.bucket_name,
+        v.id_fuel,
+        f.fuel_name,
+        v.id_body,
+        bd.body_name,
+        v.power,
+        v.color,
         v.description, 
         v."date", 
         v.updated_at, 
@@ -169,7 +189,7 @@ async function getAllVehicles(
         ARRAY_AGG(JSON_BUILD_OBJECT('id', i.id_image, 'image_name', i.image_name)) AS images,
         v.pdf_file
       FROM vehicle v 
-      JOIN image i ON i.id_vehicle = v.id 
+      LEFT JOIN image i ON i.id_vehicle = v.id 
       JOIN vehicle_type vt ON vt.id_vehicle_type = v.id_type 
       JOIN brand b USING(id_brand)
       JOIN model m USING(id_model)
@@ -177,6 +197,8 @@ async function getAllVehicles(
       LEFT JOIN "box" bx USING(id_box)
       LEFT JOIN mass mas USING(id_mass)
       LEFT JOIN bucket buck USING(id_bucket)
+      LEFT JOIN fuel f USING(id_fuel)
+      LEFT JOIN body bd USING(id_body)
       WHERE v.active = true
         AND v.id_type = $1
     `;
@@ -200,11 +222,11 @@ async function getAllVehicles(
       filterConditions += ` AND v.id_box = $${filterValues.length + 1}`;
       filterValues.push(filters.id_box);
     }
-    if (filters.id_mass) {  
+    if (filters.id_mass) {
       filterConditions += ` AND v.id_mass = $${filterValues.length + 1}`;
       filterValues.push(filters.id_mass);
     }
-    if (filters.id_bucket) {  
+    if (filters.id_bucket) {
       filterConditions += ` AND v.id_bucket = $${filterValues.length + 1}`;
       filterValues.push(filters.id_bucket);
     }
@@ -227,6 +249,12 @@ async function getAllVehicles(
                mas.mass_name,
                v.id_bucket,
                buck.bucket_name, 
+               v.id_fuel,
+               f.fuel_name,
+               v.id_body,
+               bd.body_name,
+               v.power,
+               v.color,
                v.description, 
                v."date", 
                v.updated_at, 
@@ -238,22 +266,46 @@ async function getAllVehicles(
 
     filterValues.push(limit, offsetValue);
 
+    const { error: countError, rows: countRows } = await db.query(
+      `SELECT COUNT(*) AS total
+       FROM vehicle v 
+       WHERE v.active = true
+         AND v.id_type = $1
+         ${filterConditions};`,
+      [id_type, ...Object.values(filters)]
+    );
+
+    if (countError || countRows.length === 0) {
+      return false;
+    }
+
+    const total = parseInt(countRows[0].total, 10);
+
     const { error, rows } = await db.query(query, filterValues);
 
-    return error
-      ? false
-      : rows.map((vehicle: any) => ({
-          ...vehicle,
-          pdf_file: vehicle.pdf_file
-            ? `${ALLOW_HOST}${PDF_FILE_URL}${vehicle.pdf_file}`
-            : null,
-          images: vehicle.images.map((image: any) => ({
-            ...image,
-            image_name: image.image_name
-              ? `${ALLOW_HOST}${FILE_VEHICLE_URL}image-${image.image_name}`
-              : null,
-          })),
-        }));
+    if (error) {
+      return false;
+    }
+
+    const vehicles = rows.map((vehicle: any) => ({
+      ...vehicle,
+      pdf_file: vehicle.pdf_file
+        ? `${ALLOW_HOST}${PDF_FILE_URL}${vehicle.pdf_file}`
+        : null,
+      images: vehicle.images.map((image: any) => ({
+        ...image,
+        image_name: image.image_name
+          ? `${ALLOW_HOST}${FILE_VEHICLE_URL}image-${image.image_name}`
+          : null,
+      })),
+    }));
+
+    return {
+      data: vehicles,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
   } catch (error) {
     console.log("error getAllVehicles: ", error.message);
     return false;
@@ -271,7 +323,7 @@ async function deleteVehicleById(id_vehicle: number) {
       const pdfFile = path.join(`${PDF_FILE_PATH}${vehicleRows[0].pdf_file}`);
 
       if (fs.existsSync(pdfFile)) {
-        fs.unlinkSync(pdfFile); 
+        fs.unlinkSync(pdfFile);
       }
     }
 
@@ -370,7 +422,9 @@ async function updateVehicleById(id_vehicle: number, data: any) {
     updateFields.push("updated_at = NOW()");
 
     await db.query(
-      `UPDATE vehicle SET ${updateFields.join(", ")} WHERE id = $${updateValues.length + 1}`,
+      `UPDATE vehicle SET ${updateFields.join(", ")} WHERE id = $${
+        updateValues.length + 1
+      }`,
       [...updateValues, id_vehicle]
     );
 
@@ -382,10 +436,10 @@ async function updateVehicleById(id_vehicle: number, data: any) {
         }
       }
 
-      await db.query(
-        `UPDATE vehicle SET pdf_file = $1 WHERE id = $2`,
-        [pdf_file, id_vehicle]
-      );
+      await db.query(`UPDATE vehicle SET pdf_file = $1 WHERE id = $2`, [
+        pdf_file,
+        id_vehicle,
+      ]);
     }
 
     if (images_to_delete && images_to_delete.length > 0) {
@@ -436,12 +490,14 @@ async function saveVehicle(
   id_mass: number | null,
   id_bucket: number | null,
   id_fuel: number | null,
-  id_power: number | null
+  id_body: number | null,
+  power: string | null,
+  color: string | null
 ) {
   try {
     const result_message = "";
     const { error, rows } = await db.query(
-      `CALL p_insert_vehicle($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
+      `CALL p_insert_vehicle($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
       [
         id_type,
         id_brand,
@@ -452,7 +508,9 @@ async function saveVehicle(
         id_mass ?? null,
         id_bucket ?? null,
         id_fuel ?? null,
-        id_power ?? null,
+        id_body ?? null,
+        power ?? null,
+        color ?? null,
         result_message,
       ]
     );
@@ -467,6 +525,148 @@ async function saveVehicle(
   }
 }
 
+async function updateVehicle(
+  id_vehicle: number,
+  id_type: number,
+  id_brand: number,
+  id_model: number,
+  id_capacity: number,
+  id_box: number,
+  description: string,
+  id_mass: number,
+  id_bucket: number,
+  id_fuel: number,
+  id_body: number,
+  power: string,
+  color: string,
+  active: boolean
+) {
+  try {
+    const result_message = "";
+    const { error, rows } = await db.query(
+      `CALL p_update_vehicle($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`,
+      [
+        id_vehicle,
+        id_type,
+        id_brand,
+        id_model,
+        id_capacity,
+        id_box,
+        description,
+        id_mass,
+        id_bucket,
+        id_fuel,
+        id_body,
+        power,
+        color,
+        active,
+        result_message,
+      ]
+    );
+
+    if (error) {
+      return false;
+    }
+    return rows;
+  } catch (error: any) {
+    console.error("Error in updateVehicle:", error.message);
+    return false;
+  }
+}
+
+async function addImage(id: number, images: string[]) {
+  try {
+    const result_message = "";
+    const { error, rows } = await db.query(`CALL p_insert_image($1, $2, $3);`, [
+      id,
+      images,
+      result_message,
+    ]);
+    if (error) {
+      return false;
+    }
+
+    return rows;
+  } catch (error: any) {
+    console.error("Error in addImage:", error.message);
+    return false;
+  }
+}
+
+async function addFiles(id: number, pdf_file: string) {
+  try {
+    const { error, rows } = await db.query(
+      `UPDATE vehicle
+       SET pdf_file = $2
+       WHERE id = $1;`,
+      [id, pdf_file]
+    );
+    if (error) {
+      return false;
+    }
+
+    return rows;
+  } catch (error: any) {
+    console.error("Error in addFiles:", error.message);
+    return false;
+  }
+}
+
+async function deleteImage(id_image: number) {
+  try {
+    const { rows: images } = await db.query(
+      `SELECT image_name FROM image WHERE id_image = $1`,
+      [id_image]
+    );
+
+    if (images.length > 0) {
+      const image = images[0];
+      const imagePath = path.join(
+        `${FILE_VEHICLE_PATH}image-${image.image_name}`
+      );
+
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+
+      await db.query(`DELETE FROM image WHERE id_image = $1`, [id_image]);
+
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error: any) {
+    console.error("Error in deleteImage:", error.message);
+    return false;
+  }
+}
+
+async function deleteFile(id_vehicle: number) {
+  try {
+    const { rows: vehicleRows } = await db.query(
+      `SELECT pdf_file FROM vehicle WHERE id = $1`,
+      [id_vehicle]
+    );
+
+    if (vehicleRows.length > 0 && vehicleRows[0].pdf_file) {
+      const pdfFile = path.join(`${PDF_FILE_PATH}${vehicleRows[0].pdf_file}`);
+
+      if (fs.existsSync(pdfFile)) {
+        fs.unlinkSync(pdfFile); 
+      }
+
+      await db.query(`UPDATE vehicle SET pdf_file = NULL WHERE id = $1`, [id_vehicle]);
+
+      return true; 
+    } else {
+      return false; 
+    }
+  } catch (error: any) {
+    console.error("Error in deleteFile:", error.message);
+    return false; 
+  }
+}
+
 const VehicleService = {
   create,
   getVehicleById,
@@ -474,6 +674,11 @@ const VehicleService = {
   deleteVehicleById,
   updateVehicleById,
   saveVehicle,
+  updateVehicle,
+  addImage,
+  addFiles,
+  deleteImage,
+  deleteFile,
 };
 
 export default VehicleService;
