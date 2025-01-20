@@ -1,9 +1,9 @@
 import db from "../utils/db";
 
-async function getCitizenship() {
+async function getVehicles() {
   try {
     const { rows, error } = await db.query(
-      `SELECT * FROM fn_citizenship();`,
+      `SELECT DISTINCT(vehicle_name) FROM files;`,
       []
     );
     return error ? false : rows;
@@ -14,5 +14,5 @@ async function getCitizenship() {
 }
 
 export default {
-  getCitizenship,
+  getVehicles,
 };

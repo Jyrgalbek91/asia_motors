@@ -61,6 +61,22 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
     const limit = offset;
     const offsetValue = (page - 1) * offset;
 
+    // Получение общего количества постов
+    const { error: countError, rows: countRows } = await db.query(
+      `SELECT COUNT(*) AS total
+       FROM post 
+       WHERE active = true
+         AND id_type = $1;`,
+      [id_type]
+    );
+
+    if (countError || countRows.length === 0) {
+      return false;
+    }
+
+    const total = parseInt(countRows[0].total, 10);
+
+    // Получение постов с лимитом и смещением
     const { error, rows } = await db.query(
       `SELECT 
           p.id, 
@@ -87,7 +103,7 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
       return false;
     }
 
-    return rows.map((post: any) => ({
+    const posts = rows.map((post: any) => ({
       ...post,
       images: post.images.map((image: any) => ({
         ...image,
@@ -96,6 +112,13 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
           : null,
       })),
     }));
+
+    return {
+      data: posts,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
   } catch (error) {
     console.log("error getAllPosts: ", error.message);
     return false;
@@ -229,7 +252,7 @@ async function updatePostById(id_post: number, data: any) {
   }
 }
 
-async function similarArticles(title: string): Promise<any> {
+async function similarArticles(title: string, currentPostId: number): Promise<any> {
   try {
     const keywords = title
       .replace(/[^\w\sа-яА-Я]/g, '') 
@@ -250,11 +273,12 @@ async function similarArticles(title: string): Promise<any> {
        JOIN image i ON p.id = i.id_post
        WHERE p.id_type = 1 
          AND p.tsv_content @@ to_tsquery('russian', $1)
+         AND p.id != $2
        GROUP BY p.id, p.id_type, p.title, p.description, p."date", p.updated_at, p.active
        ORDER BY ts_rank(p.tsv_content, to_tsquery('russian', $1)) DESC
        LIMIT 3;`,
-      [keywords]
-    );
+      [keywords, currentPostId]
+    );                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 
     return rows.map((post: any) => ({
       ...post,

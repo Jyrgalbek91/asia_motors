@@ -32,27 +32,27 @@ class PostController {
       const idType = Number(id);
       const pageNumber = Number(page);
       const offsetNumber = Number(offset);
-
+  
       if (isNaN(pageNumber) || isNaN(offsetNumber)) {
         return res.status(400).json({ message: "Некорректные параметры" });
       }
-
+  
       const result = await PostService.getAllPosts(
         idType,
         pageNumber,
         offsetNumber
       );
-
+  
       if (!result) {
         return res.status(404).json({ message: "Новости не найдены" });
       }
-
+  
       return res.status(200).json(result);
     } catch (error) {
       console.error("error getAllPostsController: ", error.message);
       return res.status(500).json({ message: "Internal Server Error" });
     }
-  }
+  }  
 
   async createController(req: Request, res: Response) {
     try {
@@ -194,8 +194,8 @@ class PostController {
 
   async similarArticlesController(req: Request, res: Response) {
     try {
-      const { title } = req.query;
-      const data = await PostService.similarArticles(String(title));
+      const { title, id } = req.query;
+      const data = await PostService.similarArticles(String(title), Number(id));
       return data
         ? res.status(200).json({ message: "Успешно", data })
         : res.status(400).json({ message: "Ошибка" });

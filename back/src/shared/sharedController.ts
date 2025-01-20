@@ -3,9 +3,9 @@ import sharedService from "./sharedService";
 import { sendError, sendSuccess } from "../utils/send";
 
 class SharedController {
-  async citizenshipList(req: Request, res: Response) {
+  async vehicleList(req: Request, res: Response) {
     try {
-      const data = await sharedService.getCitizenship();
+      const data = await sharedService.getVehicles();
       return data
         ? sendSuccess(res, req.t("success"), data)
         : sendError(res, req.t("error"));

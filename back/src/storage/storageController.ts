@@ -9,7 +9,7 @@ const PDF_FILE_PATH = Config.PDF_FILE_PATH;
 class StorageController {
   async saveFilesController(req: Request, res: Response) {
     try {
-      const { vehicle_name } = req.query;
+      const { vehicle_name, title } = req.query;
 
       const pdfFile = req.files?.file_name;
       if (!pdfFile)
@@ -31,7 +31,8 @@ class StorageController {
 
       const data = await StorageService.saveFiles(
         String(vehicle_name),
-        dbFileName
+        dbFileName,
+        String(title)
       );
       return data
         ? res.status(200).json({ message: "Успешно сохранено!", data })
@@ -46,19 +47,19 @@ class StorageController {
     try {
       const { id_file } = req.params;
       const data = req.body;
-
+  
       if (isNaN(Number(id_file))) {
         return res.status(400).json({ message: "Неверный формат ID" });
       }
-
+  
       let newPdfFileName: string | null = null;
       const file_name = req.files?.file_name;
-
+  
       if (file_name) {
         const pdfFileName = Array.isArray(file_name)
           ? file_name[0].name
           : file_name.name;
-
+  
         const { dbFileName, error } = await FileService.saveFile({
           path: PDF_FILE_PATH,
           fileName: pdfFileName,
@@ -66,20 +67,20 @@ class StorageController {
           type: "file",
           allowTypePrefix: false,
         });
-
+  
         if (error) {
           return res
             .status(400)
             .json({ message: "Ошибка обновления PDF-файла" });
         }
-
+  
         newPdfFileName = dbFileName;
       }
-
+  
       if (newPdfFileName) {
         data.file_name = newPdfFileName;
       }
-
+  
       const result = await StorageService.updateFiles(Number(id_file), data);
       if (result) {
         return res.status(200).json({ message: "Успешно обновлено" });
@@ -134,6 +135,72 @@ class StorageController {
     } catch (error) {
       console.log("error getFilesController: ", error.message);
       return false;
+    }
+  }
+
+  async saveInfoFilesController(req: Request, res: Response) {
+    try {
+      const { vehicle_name } = req.query;
+
+      const pdfFile = req.files?.file_name;
+      if (!pdfFile)
+        return res.status(400).json({ message: "Файл отсутствует" });
+
+      const pdfFileName = Array.isArray(pdfFile)
+        ? pdfFile[0].name
+        : pdfFile.name;
+
+      const { dbFileName, error } = await FileService.saveFile({
+        path: PDF_FILE_PATH,
+        fileName: pdfFileName,
+        sampleFile: Array.isArray(pdfFile) ? pdfFile[0] : pdfFile,
+        type: "file",
+        allowTypePrefix: false,
+      });
+      if (error)
+        return res.status(400).json({ message: "Не удалось сохранить файл" });
+
+      const data = await StorageService.saveInfoFiles(
+        String(vehicle_name),
+        dbFileName
+      );
+      return data
+        ? res.status(200).json({ message: "Успешно сохранено!", data })
+        : res.status(400).json({ message: "Ошибка сохранения файла!" });
+    } catch (error) {
+      console.log("error saveFilesController: ", error.message);
+      return false;
+    }
+  }
+
+  async getInfoFilesController(req: Request, res: Response) {
+    try {
+      const { vehicle_name } = req.query;
+      const data = await StorageService.getInfoFiles(String(vehicle_name));
+
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка получения файла" });
+    } catch (error) {
+      console.log("error getInfoFilesController: ", error.message);
+      return false;
+    }
+  }
+
+  async deleteInfoStorageController(req: Request, res: Response) {
+    const { id_file } = req.params;
+    console.log(id_file);
+
+    if (isNaN(Number(id_file))) {
+      return res.status(400).json({ message: "Неверный формат ID" });
+    }
+
+    const result = await StorageService.deleteInfoStorageById(Number(id_file));
+
+    if (result) {
+      return res.status(200).json({ message: "Успешно удалено" });
+    } else {
+      return res.status(500).json({ message: "Ошибка при удалении" });
     }
   }
 }
