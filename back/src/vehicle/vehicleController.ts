@@ -5,6 +5,7 @@ import Config from "../utils/config";
 import vehicleSchema from "./vehicleSchema";
 import VehicleService from "./vehicleService";
 import File from "../utils/file";
+import TokenService from "../utils/jwt";
 
 const FILE_VEHICLE_PATH = Config.FILE_VEHICLE_PATH;
 const PDF_FILE_PATH = Config.PDF_FILE_PATH;
@@ -134,42 +135,64 @@ class VehicleController {
         id_mass,
         id_bucket,
       } = req.query;
-
+  
+      const authHeader = req.headers.authorization;
+      let isAdmin = false; 
+      const filters: any = {}; 
+  
+      if (authHeader) {
+        const resultToken = TokenService.getTokenData(authHeader);
+        console.log("Authorization header:", resultToken);
+  
+        if (resultToken === false) {
+          return res.status(400).json({ message: "Invalid or missing token" });
+        }
+  
+        const roles = resultToken.r || [];
+        console.log("Roles:", roles);
+  
+        isAdmin = roles.some((role: any) => role.role_name === "ADMIN");
+      }
+  
+      if (!isAdmin) {
+        filters.active = true;
+      }
+  
       const idType = Number(id);
       const pageNumber = Number(page);
       const offsetNumber = Number(offset);
-
+  
       if (isNaN(pageNumber) || isNaN(offsetNumber)) {
         return res.status(400).json({ message: "Некорректные параметры" });
       }
-
-      const filters: any = {};
+  
       if (id_brand) filters.id_brand = Number(id_brand);
       if (id_model) filters.id_model = Number(id_model);
       if (id_capacity) filters.id_capacity = Number(id_capacity);
       if (id_box) filters.id_box = Number(id_box);
       if (id_mass) filters.id_mass = Number(id_mass);
       if (id_bucket) filters.id_bucket = Number(id_bucket);
-
+  
       const result = await VehicleService.getAllVehicles(
         idType,
         pageNumber,
         offsetNumber,
-        filters
+        filters,
+        isAdmin
       );
-
+  
       if (!result) {
         return res.status(404).json({
           message: `Транспортные средства не найдены`,
         });
       }
-
+  
       return res.status(200).json(result);
     } catch (error) {
       console.error("error getAllVehicleController: ", error.message);
       return res.status(500).json({ message: "Internal Server Error" });
     }
-  }
+  }  
 
   async showFile(req: Request, res: Response) {
     try {

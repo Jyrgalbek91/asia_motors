@@ -153,7 +153,8 @@ async function getAllVehicles(
     id_box?: number;
     id_mass?: number;
     id_bucket?: number;
-  }
+  },
+  isAdmin: boolean
 ) {
   try {
     const limit = offset;
@@ -199,12 +200,15 @@ async function getAllVehicles(
       LEFT JOIN bucket buck USING(id_bucket)
       LEFT JOIN fuel f USING(id_fuel)
       LEFT JOIN body bd USING(id_body)
-      WHERE v.active = true
-        AND v.id_type = $1
+      WHERE v.id_type = $1
     `;
 
     const filterValues: any[] = [id_type];
     let filterConditions = "";
+
+    if (!isAdmin) {
+      filterConditions += ` AND v.active = true`; 
+    }
 
     if (filters.id_brand) {
       filterConditions += ` AND v.id_brand = $${filterValues.length + 1}`;
@@ -266,14 +270,16 @@ async function getAllVehicles(
 
     filterValues.push(limit, offsetValue);
 
-    const { error: countError, rows: countRows } = await db.query(
-      `SELECT COUNT(*) AS total
-       FROM vehicle v 
-       WHERE v.active = true
-         AND v.id_type = $1
-         ${filterConditions};`,
-      [id_type, ...Object.values(filters)]
-    );
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM vehicle v
+      WHERE v.id_type = $1
+      ${filterConditions};
+    `;
+
+    const countParams = [id_type, ...filterValues.slice(1, -2)];
+
+    const { error: countError, rows: countRows } = await db.query(countQuery, countParams);
 
     if (countError || countRows.length === 0) {
       return false;
