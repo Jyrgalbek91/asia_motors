@@ -142,15 +142,11 @@ class VehicleController {
   
       if (authHeader) {
         const resultToken = TokenService.getTokenData(authHeader);
-        console.log("Authorization header:", resultToken);
-  
         if (resultToken === false) {
           return res.status(400).json({ message: "Invalid or missing token" });
         }
   
         const roles = resultToken.r || [];
-        console.log("Roles:", roles);
-  
         isAdmin = roles.some((role: any) => role.role_name === "ADMIN");
       }
   

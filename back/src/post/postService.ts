@@ -56,7 +56,7 @@ async function getPostById(id_post: number) {
   }
 }
 
-async function getAllPosts(id_type: number, page: number, offset: number) {
+async function getAllPosts(id_type: number, page: number, offset: number, isAdmin: boolean) {
   try {
     const limit = offset;
     const offsetValue = (page - 1) * offset;
@@ -64,8 +64,8 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
     const { error: countError, rows: countRows } = await db.query(
       `SELECT COUNT(*) AS total
        FROM post 
-       WHERE active = true
-         AND id_type = $1;`,
+       WHERE id_type = $1
+       ${isAdmin ? "" : "AND active = true"}`, 
       [id_type]
     );
 
@@ -89,8 +89,8 @@ async function getAllPosts(id_type: number, page: number, offset: number) {
         FROM post p
         LEFT JOIN image i ON i.id_post = p.id
         JOIN post_type pt ON pt.id_post_type = p.id_type
-        WHERE p.active = true
-          AND p.id_type = $1
+        WHERE p.id_type = $1
+        ${isAdmin ? "" : "AND p.active = true"}  
         GROUP BY p.id, p.id_type, pt.type_name, p.title, p.description, p."date", p.updated_at, p.active
         ORDER BY p.updated_at DESC
         LIMIT $2 OFFSET $3;`,
@@ -127,13 +127,14 @@ async function create(
   id_type: number,
   title: string,
   description: string,
-  images: string[]
+  images: string[],
+  date: string
 ) {
   try {
     const result_message = "";
     const { error, rows } = await db.query(
-      `CALL p_insert_post($1, $2, $3, $4, $5);`,
-      [id_type, title, description, images, result_message]
+      `CALL p_insert_post($1, $2, $3, $4, $5, $6);`,
+      [id_type, title, description, images, date, result_message]
     );
     if (error) {
       console.error("Error while inserting post:", error);
@@ -179,7 +180,7 @@ async function deletePostById(id_post: number) {
 
 async function updatePostById(id_post: number, data: any) {
   try {
-    const { title, description, id_type, images_to_delete, images, active } = data;
+    const { title, description, id_type, images_to_delete, images, active, date } = data;
 
     let updateFields: string[] = [];
     let updateValues: any[] = [];
@@ -197,15 +198,19 @@ async function updatePostById(id_post: number, data: any) {
       updateValues.push(id_type);
     }
 
-    const activeValue = active === 'false' ? false : active || true;
+    if (date !== undefined) {
+      updateFields.push(`"date" = $${updateValues.length + 1}`);
+      updateValues.push(date); 
+    }
 
+    const activeValue = active === "false" ? false : active || true;
     updateFields.push(`active = $${updateValues.length + 1}`);
     updateValues.push(activeValue);
 
     if (updateFields.length > 0) {
       await db.query(
         `UPDATE post SET ${updateFields.join(", ")} WHERE id = $${updateValues.length + 1}`,
-        [...updateValues, id_post] 
+        [...updateValues, id_post]
       );
     }
 
@@ -247,13 +252,17 @@ async function updatePostById(id_post: number, data: any) {
   }
 }
 
-async function similarArticles(id_type: number, title: string, currentPostId: number): Promise<any> {
+async function similarArticles(
+  id_type: number,
+  title: string,
+  currentPostId: number
+): Promise<any> {
   try {
     const keywords = title
-      .replace(/[^\w\sа-яА-Я]/g, '') 
-      .split(' ')
-      .filter((word) => word.length > 3) 
-      .join(' | '); 
+      .replace(/[^\w\sа-яА-Я]/g, "")
+      .split(" ")
+      .filter((word) => word.length > 3)
+      .join(" | ");
 
     const { rows } = await db.query(
       `SELECT p.id,
@@ -285,7 +294,7 @@ async function similarArticles(id_type: number, title: string, currentPostId: nu
       })),
     }));
   } catch (error: any) {
-    console.error('Error in similarArticles:', error.message);
+    console.error("Error in similarArticles:", error.message);
     return [];
   }
 }
