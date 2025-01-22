@@ -10,6 +10,6 @@ router.get("/file/info", StorageController.getInfoFilesController);
 router.get("/pdf_file/show/:fileName", StorageController.showFile);
 router.put("/update/:id_file", StorageController.updateFilesController);
 router.delete("/delete/:id_file", StorageController.deleteStorageController);
-router.delete("/delete/:id_file", StorageController.deleteInfoStorageController);
+// router.delete("/delete/:id_file", StorageController.deleteInfoStorageController);
 
 export default router;

@@ -134,7 +134,8 @@ async function getFiles(vehicle_name: string) {
   try {
     const { error, rows } = await db.query(
       `SELECT id_file, title, file_name FROM files
-       WHERE vehicle_name = $1;`,
+       WHERE vehicle_name = $1 AND title IS NOT NULL
+       ORDER BY id_file;`,
       [vehicle_name]
     );
     if (error) return false;
@@ -169,7 +170,7 @@ async function getInfoFiles(vehicle_name: string) {
   try {
     const { error, rows } = await db.query(
       `SELECT id_file, file_name FROM files
-       WHERE vehicle_name = $1;`,
+       WHERE vehicle_name = $1 AND title IS NULL;`,
       [vehicle_name]
     );
     if (error) return false;
