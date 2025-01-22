@@ -8,7 +8,7 @@ async function getVehicles() {
     );
     return error ? false : rows;
   } catch (error) {
-    console.log("error getCitizenship: ", error.message);
+    console.log("error getModel: ", error.message);
     return false;
   }
 }

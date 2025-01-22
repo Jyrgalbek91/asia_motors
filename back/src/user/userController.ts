@@ -51,6 +51,119 @@ class UserController {
       return sendError(res, req.t("error"), false, 400);
     }
   }
+  async recourse(req: Request, res: Response) {
+    try {
+      const { name, phone, auto, release, mileage, recourse } = req.body;
+      const data = await UserService.saveRecourse(
+        name,
+        phone,
+        auto,
+        release,
+        mileage,
+        recourse
+      );
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка" });
+    } catch (error) {
+      console.log("error recourse: ", error.message);
+      return false;
+    }
+  }
+
+  async getAllResourseController(req: Request, res: Response) {
+    try {
+      const { page = 1, offset = 10 } = req.query;
+      const pageNumber = Number(page);
+      const offsetNumber = Number(offset);
+      const data = await UserService.getAllResourse(pageNumber, offsetNumber);
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка" });
+    } catch (error) {
+      console.log("error getAllResourseController: ", error.message);
+      return false;
+    }
+  }
+
+  async getResourseByIdController(req: Request, res: Response) {
+    try {
+      const { id_service } = req.query;
+      const data = await UserService.getResourseById(Number(id_service));
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка" });
+    } catch (error) {
+      console.log("error getResourseByIdController: ", error.message);
+      return false;
+    }
+  }
+
+  async markAsRead(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const updatedData = await UserService.markAsRead(Number(id));
+      console.log(updatedData);
+
+      return updatedData
+        ? res.status(200).json({
+            message: "Помечено как прочитанное",
+            data: updatedData,
+          })
+        : res.status(404).json({ message: "Запись не найдена" });
+    } catch (error) {
+      console.error("Error in markAsRead: ", error.message);
+      return res.status(500).json({ message: "Ошибка при обновлении записи" });
+    }
+  }
+
+  async feedback(req: Request, res: Response) {
+    try {
+      const { name, phone, id_brand, id_model, wording } = req.body;
+      const data = await UserService.saveFeedback(
+        name,
+        phone,
+        id_brand,
+        id_model,
+        wording
+      );
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка" });
+    } catch (error) {
+      console.log("error feedback: ", error.message);
+      return false;
+    }
+  }
+
+  async getAllFeedbackController(req: Request, res: Response) {
+    try {
+      const { page = 1, offset = 10 } = req.query;
+      const pageNumber = Number(page);
+      const offsetNumber = Number(offset);
+      const data = await UserService.getAllFeedback(pageNumber, offsetNumber);
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка" });
+    } catch (error) {
+      console.log("error getAllFeedbackController: ", error.message);
+      return false;
+    }
+  }
+
+  async getFeedbackIdController(req: Request, res: Response) {
+    try {
+      const { id_feedback } = req.query;
+      const data = await UserService.getFeedbackById(Number(id_feedback));
+      return data
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(400).json({ message: "Ошибка" });
+    } catch (error) {
+      console.log("error getFeedbackIdController: ", error.message);
+      return false;
+    }
+  }
 }
 
 export default new UserController();

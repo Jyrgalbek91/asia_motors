@@ -1,16 +1,14 @@
 import { Request, Response } from "express";
 import sharedService from "./sharedService";
-import { sendError, sendSuccess } from "../utils/send";
-
 class SharedController {
-  async vehicleList(req: Request, res: Response) {
+  async vehicleList(_req: Request, res: Response) {
     try {
       const data = await sharedService.getVehicles();
       return data
-        ? sendSuccess(res, req.t("success"), data)
-        : sendError(res, req.t("error"));
+        ? res.status(200).json({ message: "Успешно", data })
+        : res.status(404).json({ message: "Ошибка" });
     } catch (error) {
-      return sendError(res, req.t("error"));
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 }

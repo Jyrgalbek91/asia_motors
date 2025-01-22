@@ -5,6 +5,7 @@ import postSchema from "./postSchema";
 import FileService from "../services/FileService";
 import Config from "../utils/config";
 import File from "../utils/file";
+import TokenService from "../utils/jwt";
 
 const FILE_POST_PATH = Config.FILE_POST_PATH;
 
@@ -33,33 +34,51 @@ class PostController {
       const pageNumber = Number(page);
       const offsetNumber = Number(offset);
   
+  
       if (isNaN(pageNumber) || isNaN(offsetNumber)) {
         return res.status(400).json({ message: "Некорректные параметры" });
       }
   
+      const authHeader = req.headers.authorization;
+      
+      let isAdmin = false; 
+  
+      if (authHeader) {
+        const resultToken = TokenService.getTokenData(authHeader);
+        console.log(resultToken);
+        if (resultToken === false) {
+          return res.status(400).json({ message: "Invalid or missing token" });
+        }
+          const roles = resultToken.r || [];
+          isAdmin = roles.some((role: any) => role.role_name === "ADMIN");
+      }  
+  
       const result = await PostService.getAllPosts(
         idType,
         pageNumber,
-        offsetNumber
+        offsetNumber,
+        isAdmin
       );
+  
   
       if (!result) {
         return res.status(404).json({ message: "Новости не найдены" });
       }
+  
   
       return res.status(200).json(result);
     } catch (error) {
       console.error("error getAllPostsController: ", error.message);
       return res.status(500).json({ message: "Internal Server Error" });
     }
-  }  
+  }    
 
   async createController(req: Request, res: Response) {
     try {
       const isValid = validate(req.body, postSchema.postSchema);
       if (!isValid) return res.status(400).json({ message: "Неверный формат" });
 
-      const { id_type, title, description, images } = req.body;
+      const { id_type, title, description, images, date } = req.body;
 
       const idUser = Number(req.user?.id);
       if (!idUser) {
@@ -89,11 +108,14 @@ class PostController {
         }
       }
 
+      const postDate = date ? date : new Date().toISOString();
+
       const result = await PostService.create(
         id_type,
         title,
         description,
-        uploadedImages.length > 0 ? uploadedImages : images
+        uploadedImages.length > 0 ? uploadedImages : images,
+        postDate
       );
 
       if (!result) {
@@ -141,24 +163,28 @@ class PostController {
     try {
       const { id_post } = req.params;
       const data = req.body;
-
+  
       if (isNaN(Number(id_post))) {
         return res.status(400).json({ message: "Неверный формат ID" });
       }
-
+  
       if (typeof data.images_to_delete === "string") {
         data.images_to_delete = data.images_to_delete
           .split(",")
           .map((id: string) => Number(id.trim()))
           .filter((id: number) => !isNaN(id));
       }
-
+  
+      if (data.date && isNaN(Date.parse(data.date))) {
+        return res.status(400).json({ message: "Неверный формат даты" });
+      }
+  
       const uploadedImages: string[] = [];
       if (req.files && req.files.images) {
         const imagesArray = Array.isArray(req.files.images)
           ? req.files.images
           : [req.files.images];
-
+  
         for (const file of imagesArray) {
           const result = await FileService.saveFile({
             path: FILE_POST_PATH,
@@ -166,21 +192,21 @@ class PostController {
             sampleFile: file,
             type: "image",
           });
-
+  
           if (result.error) {
             return res.status(400).json({ message: "Ошибка загрузки файла" });
           }
-
+  
           uploadedImages.push(result.dbFileName);
         }
       }
-
+  
       data.images = uploadedImages.map((imageName) => ({
         image_name: imageName,
       }));
-
+  
       const result = await PostService.updatePostById(Number(id_post), data);
-
+  
       if (result) {
         return res.status(200).json({ message: "Успешно обновлено" });
       } else {
@@ -190,7 +216,7 @@ class PostController {
       console.error("Error in updatePost:", error);
       return res.status(500).json({ message: "Internal server error" });
     }
-  }
+  }  
 
   async similarArticlesController(req: Request, res: Response) {
     try {
