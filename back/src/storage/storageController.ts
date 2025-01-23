@@ -9,7 +9,8 @@ const PDF_FILE_PATH = Config.PDF_FILE_PATH;
 class StorageController {
   async saveFilesController(req: Request, res: Response) {
     try {
-      const { vehicle_name, title } = req.query;
+      const { id_vehicle, title } = req.query;
+      console.log(id_vehicle);
 
       const pdfFile = req.files?.file_name;
       if (!pdfFile)
@@ -30,10 +31,13 @@ class StorageController {
         return res.status(400).json({ message: "Не удалось сохранить файл" });
 
       const data = await StorageService.saveFiles(
-        String(vehicle_name),
+        Number(id_vehicle),
         dbFileName,
         String(title)
       );
+      console.log(data);
+
+      
       return data
         ? res.status(200).json({ message: "Успешно сохранено!", data })
         : res.status(400).json({ message: "Ошибка сохранения файла!" });
@@ -109,7 +113,6 @@ class StorageController {
 
   async deleteStorageController(req: Request, res: Response) {
     const { id_file } = req.params;
-    console.log(id_file);
 
     if (isNaN(Number(id_file))) {
       return res.status(400).json({ message: "Неверный формат ID" });
@@ -126,8 +129,8 @@ class StorageController {
 
   async getFilesController(req: Request, res: Response) {
     try {
-      const { vehicle_name } = req.query;
-      const data = await StorageService.getFiles(String(vehicle_name));
+      const { id_vehicle } = req.query;
+      const data = await StorageService.getFiles(Number(id_vehicle));
 
       return data
         ? res.status(200).json({ message: "Успешно", data })
@@ -140,7 +143,7 @@ class StorageController {
 
   async saveInfoFilesController(req: Request, res: Response) {
     try {
-      const { vehicle_name } = req.query;
+      const { id_vehicle } = req.query;
 
       const pdfFile = req.files?.file_name;
       if (!pdfFile)
@@ -161,7 +164,7 @@ class StorageController {
         return res.status(400).json({ message: "Не удалось сохранить файл" });
 
       const data = await StorageService.saveInfoFiles(
-        String(vehicle_name),
+        Number(id_vehicle),
         dbFileName
       );
       return data
@@ -175,8 +178,8 @@ class StorageController {
 
   async getInfoFilesController(req: Request, res: Response) {
     try {
-      const { vehicle_name } = req.query;
-      const data = await StorageService.getInfoFiles(String(vehicle_name));
+      const { id_vehicle } = req.query;
+      const data = await StorageService.getInfoFiles(Number(id_vehicle));
 
       return data
         ? res.status(200).json({ message: "Успешно", data })
@@ -189,7 +192,6 @@ class StorageController {
 
   async deleteInfoStorageController(req: Request, res: Response) {
     const { id_file } = req.params;
-    console.log(id_file);
 
     if (isNaN(Number(id_file))) {
       return res.status(400).json({ message: "Неверный формат ID" });

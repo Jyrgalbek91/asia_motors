@@ -3,7 +3,7 @@ import db from "../utils/db";
 async function getVehicles() {
   try {
     const { rows, error } = await db.query(
-      `SELECT DISTINCT(vehicle_name) FROM files;`,
+      `SELECT id, vehicle_name FROM vehicle ORDER BY id;`,
       []
     );
     return error ? false : rows;

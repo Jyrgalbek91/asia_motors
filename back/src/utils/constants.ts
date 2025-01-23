@@ -1,1 +1,1 @@
-export const BUILD_NAME = "asia_motors";
+export const BUILD_NAME = "hyundai";

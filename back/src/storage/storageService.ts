@@ -8,7 +8,7 @@ const ALLOW_HOST = Config.ALLOW_HOST;
 const PDF_FILE_URL = Config.PDF_FILE_URL;
 
 async function saveFiles(
-  vehicle_name: string,
+  id_vehicle: number,
   file_name: string,
   title: string
 ) {
@@ -16,10 +16,10 @@ async function saveFiles(
     const checkQuery = `
       SELECT id_file 
       FROM files 
-      WHERE vehicle_name = $1 AND title = $2;
+      WHERE id_vehicle = $1 AND title = $2;
     `;
     const { rows: existingRows } = await db.query(checkQuery, [
-      vehicle_name,
+      id_vehicle,
       title,
     ]);
 
@@ -37,12 +37,12 @@ async function saveFiles(
       return updatedRows;
     } else {
       const insertQuery = `
-        INSERT INTO files(vehicle_name, file_name, title)
+        INSERT INTO files(id_vehicle, file_name, title)
         VALUES($1, $2, $3)
         RETURNING id_file;
       `;
       const { rows: insertedRows } = await db.query(insertQuery, [
-        vehicle_name,
+        id_vehicle,
         file_name,
         title,
       ]);
@@ -130,13 +130,13 @@ async function deleteStorageById(id_file: number) {
   }
 }
 
-async function getFiles(vehicle_name: string) {
+async function getFiles(id_vehicle: number) {
   try {
     const { error, rows } = await db.query(
       `SELECT id_file, title, file_name FROM files
-       WHERE vehicle_name = $1 AND title IS NOT NULL
+       WHERE id_vehicle = $1 AND title IS NOT NULL
        ORDER BY id_file;`,
-      [vehicle_name]
+      [id_vehicle]
     );
     if (error) return false;
 
@@ -151,13 +151,13 @@ async function getFiles(vehicle_name: string) {
   }
 }
 
-async function saveInfoFiles(vehicle_name: string, file_name: string) {
+async function saveInfoFiles(id_vehicle: number, file_name: string) {
   try {
     const { error, rows } = await db.query(
-      `INSERT INTO files(vehicle_name, file_name)
+      `INSERT INTO files(id_vehicle, file_name)
              VALUES($1, $2)
              RETURNING id_file;`,
-      [vehicle_name, file_name]
+      [id_vehicle, file_name]
     );
     return error ? false : rows;
   } catch (error) {
@@ -166,12 +166,12 @@ async function saveInfoFiles(vehicle_name: string, file_name: string) {
   }
 }
 
-async function getInfoFiles(vehicle_name: string) {
+async function getInfoFiles(id_vehicle: number) {
   try {
     const { error, rows } = await db.query(
       `SELECT id_file, file_name FROM files
-       WHERE vehicle_name = $1 AND title IS NULL;`,
-      [vehicle_name]
+       WHERE id_vehicle = $1 AND title IS NULL;`,
+      [id_vehicle]
     );
     if (error) return false;
 
