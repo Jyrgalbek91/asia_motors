@@ -94,7 +94,7 @@ async function updateFiles(id_file: number, data: any) {
     if (fields.length > 0) {
       values.push(id_file);
       updateResult = await db.query(
-        `UPDATE files SET ${fields.join(", ")} WHERE id_file = $${fields.length + 1}`,
+        `UPDATE files SET ${fields.join(", ")} WHERE id_file = $${fields.length + 1} RETURNING *`,
         values
       );
     }

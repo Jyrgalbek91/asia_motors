@@ -30,9 +30,9 @@ class PostController {
     try {
       const { id } = req.params;
       const { page = 1, offset = 12 } = req.query;
-      const idType = Number(id);
-      const pageNumber = Number(page);
-      const offsetNumber = Number(offset);
+        const idType = Number(id);
+        const pageNumber = Number(page);
+        const offsetNumber = Number(offset);
   
   
       if (isNaN(pageNumber) || isNaN(offsetNumber)) {
@@ -79,6 +79,7 @@ class PostController {
       if (!isValid) return res.status(400).json({ message: "Неверный формат" });
 
       const { id_type, title, description, images, date } = req.body;
+      const idType = Number(id_type);
 
       const idUser = Number(req.user?.id);
       if (!idUser) {
@@ -111,7 +112,7 @@ class PostController {
       const postDate = date ? date : new Date().toISOString();
 
       const result = await PostService.create(
-        id_type,
+        idType,
         title,
         description,
         uploadedImages.length > 0 ? uploadedImages : images,

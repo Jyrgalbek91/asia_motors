@@ -37,7 +37,6 @@ class StorageController {
       );
       console.log(data);
 
-      
       return data
         ? res.status(200).json({ message: "Успешно сохранено!", data })
         : res.status(400).json({ message: "Ошибка сохранения файла!" });
@@ -51,19 +50,19 @@ class StorageController {
     try {
       const { id_file } = req.params;
       const data = req.body;
-  
+
       if (isNaN(Number(id_file))) {
         return res.status(400).json({ message: "Неверный формат ID" });
       }
-  
+
       let newPdfFileName: string | null = null;
       const file_name = req.files?.file_name;
-  
+
       if (file_name) {
         const pdfFileName = Array.isArray(file_name)
           ? file_name[0].name
           : file_name.name;
-  
+
         const { dbFileName, error } = await FileService.saveFile({
           path: PDF_FILE_PATH,
           fileName: pdfFileName,
@@ -71,23 +70,25 @@ class StorageController {
           type: "file",
           allowTypePrefix: false,
         });
-  
+
         if (error) {
           return res
             .status(400)
             .json({ message: "Ошибка обновления PDF-файла" });
         }
-  
+
         newPdfFileName = dbFileName;
       }
-  
+
       if (newPdfFileName) {
         data.file_name = newPdfFileName;
       }
-  
+
       const result = await StorageService.updateFiles(Number(id_file), data);
-      if (result) {
-        return res.status(200).json({ message: "Успешно обновлено" });
+      if (result && typeof result === "object") {
+        return res
+          .status(200)
+          .json({ message: "Успешно обновлено", data: result.rows });
       } else {
         return res.status(500).json({ message: "Ошибка обновления" });
       }

@@ -32,14 +32,16 @@ const ALLOW_HOST_LIST: string[] = (
     : [ALLOW_HOST]
 ) as string[];
 
-
 //file
 const FILE_POST_PATH = process.env.FILE_POST_PATH || "";
 const FILE_POST_URL = process.env.FILE_POST_URL || "";
 const FILE_VEHICLE_PATH = process.env.FILE_VEHICLE_PATH || "";
 const FILE_VEHICLE_URL = process.env.FILE_VEHICLE_URL || "";
 const PDF_FILE_PATH = process.env.PDF_FILE_PATH || "";
-const PDF_FILE_URL = process.env.PDF_FILE_URL ||"";
+const PDF_FILE_URL = process.env.PDF_FILE_URL || "";
+
+const FILE_CAR_IMAGES_PATH = process.env.FILE_CAR_IMAGES_PATH || "";
+const FILE_CAR_IMAGES_URL = process.env.FILE_CAR_IMAGES_URL || "";
 
 const EMAIL_JWT_EXPIRE_HOURSE = process.env.EMAIL_JWT_EXPIRE_HOURSE || "1000h";
 
@@ -67,6 +69,8 @@ const Config = {
   PDF_FILE_PATH,
   PDF_FILE_URL,
   EMAIL_JWT_EXPIRE_HOURSE,
+  FILE_CAR_IMAGES_PATH,
+  FILE_CAR_IMAGES_URL,
 };
 
 export default Config;

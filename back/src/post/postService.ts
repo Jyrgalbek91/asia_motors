@@ -133,7 +133,7 @@ async function create(
   try {
     const result_message = "";
     const { error, rows } = await db.query(
-      `CALL p_insert_post($1, $2, $3, $4, $5, $6);`,
+      `CALL p_insert_post($1::integer, $2::text, $3::text, $4::text[], $5::date, $6::text);`,
       [id_type, title, description, images, date, result_message]
     );
     if (error) {
