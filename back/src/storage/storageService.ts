@@ -7,11 +7,7 @@ const PDF_FILE_PATH = Config.PDF_FILE_PATH;
 const ALLOW_HOST = Config.ALLOW_HOST;
 const PDF_FILE_URL = Config.PDF_FILE_URL;
 
-async function saveFiles(
-  id_vehicle: number,
-  file_name: string,
-  title: string
-) {
+async function saveFiles(id_vehicle: number, file_name: string, title: string) {
   try {
     const checkQuery = `
       SELECT id_file 
@@ -56,7 +52,7 @@ async function saveFiles(
 
 async function updateFiles(id_file: number, data: any) {
   try {
-    const { file_name, title } = data;
+    const { file_name } = data;
     let oldPdfFileName = null;
     let updateResult = null;
 
@@ -69,12 +65,10 @@ async function updateFiles(id_file: number, data: any) {
       oldPdfFileName = vehicleRows[0].file_name;
     }
 
-    if (file_name) {
-      if (oldPdfFileName && oldPdfFileName !== file_name) {
-        const oldPdfFilePath = path.join(PDF_FILE_PATH, oldPdfFileName);
-        if (fs.existsSync(oldPdfFilePath)) {
-          fs.unlinkSync(oldPdfFilePath);
-        }
+    if (file_name && oldPdfFileName && oldPdfFileName !== file_name) {
+      const oldPdfFilePath = path.join(PDF_FILE_PATH, oldPdfFileName);
+      if (fs.existsSync(oldPdfFilePath)) {
+        fs.unlinkSync(oldPdfFilePath);
       }
     }
 
@@ -82,24 +76,28 @@ async function updateFiles(id_file: number, data: any) {
     const values = [];
 
     if (file_name) {
-      fields.push("file_name = $" + (fields.length + 1));
+      fields.push(`file_name = $${fields.length + 1}`);
       values.push(file_name);
-    }
-
-    if (title) {
-      fields.push("title = $" + (fields.length + 1));
-      values.push(title);
     }
 
     if (fields.length > 0) {
       values.push(id_file);
       updateResult = await db.query(
-        `UPDATE files SET ${fields.join(", ")} WHERE id_file = $${fields.length + 1} RETURNING *`,
+        `UPDATE files SET ${fields.join(", ")} WHERE id_file = $${
+          fields.length + 1
+        } RETURNING *`,
         values
       );
     }
 
-    return updateResult;
+    if (updateResult && updateResult.rows.length > 0) {
+      return updateResult.rows.map((row) => ({
+        ...row,
+        file_name: `${ALLOW_HOST}${PDF_FILE_URL}${row.file_name}`,
+      }));
+    }
+
+    return null;
   } catch (error) {
     console.log("error updateFiles: ", error.message);
     return false;
@@ -210,6 +208,26 @@ async function deleteInfoStorageById(id_file: number) {
   }
 }
 
+async function updateStorage(id_file: number, title: string) {
+  try {
+    const { error, rows } = await db.query(
+      `UPDATE files SET title = $2 WHERE id_file = $1
+       RETURNING *;`,
+      [id_file, title]
+    );
+    if (error) return false;
+
+    const data = rows.map((row) => ({
+      ...row,
+      file_name: `${ALLOW_HOST}${PDF_FILE_URL}${row.file_name}`,
+    }));
+    return data;
+  } catch (error) {
+    console.log("error updateStorage: ", error.message);
+    return false;
+  }
+}
+
 const StorageService = {
   saveFiles,
   updateFiles,
@@ -218,6 +236,7 @@ const StorageService = {
   saveInfoFiles,
   getInfoFiles,
   deleteInfoStorageById,
+  updateStorage,
 };
 
 export default StorageService;

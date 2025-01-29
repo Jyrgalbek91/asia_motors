@@ -275,7 +275,7 @@ async function similarArticles(title: string, currentPostId: number): Promise<an
          AND p.tsv_content @@ to_tsquery('russian', $1)
          AND p.id != $2
        GROUP BY p.id, p.id_type, p.title, p.description, p."date", p.updated_at, p.active
-       ORDER BY ts_rank(p.tsv_content, to_tsquery('russian', $2)) DESC
+       ORDER BY ts_rank(p.tsv_content, to_tsquery('russian', $1)) DESC
        LIMIT 3;`,
       [keywords, currentPostId]
     );                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  

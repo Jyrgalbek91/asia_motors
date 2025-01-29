@@ -88,7 +88,7 @@ class StorageController {
       if (result && typeof result === "object") {
         return res
           .status(200)
-          .json({ message: "Успешно обновлено", data: result.rows });
+          .json({ message: "Успешно обновлено", data: result });
       } else {
         return res.status(500).json({ message: "Ошибка обновления" });
       }
@@ -204,6 +204,21 @@ class StorageController {
       return res.status(200).json({ message: "Успешно удалено" });
     } else {
       return res.status(500).json({ message: "Ошибка при удалении" });
+    }
+  }
+
+  async updateStorageController(req: Request, res: Response) {
+    try {
+      const { id_file } = req.params;
+      const { title } = req.body;
+
+      const data = await StorageService.updateStorage(Number(id_file), title);
+      return data
+        ? res.status(200).json({ message: "Успешно обновлено", data })
+        : res.status(400).json({ message: "Ошибка при обновлении" });
+    } catch (error) {
+      console.log("error updateStorageController: ", error.message);
+      return false;
     }
   }
 }
