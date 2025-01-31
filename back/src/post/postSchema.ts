@@ -4,10 +4,10 @@ const postSchema: Schema = {
   type: "object",
   properties: {
     id_type: { type: "string", minLength: 1, required: true },
-    title: { type: "string", minLength: 6 },
-    description: { type: "string", minLength: 6 },
+    title: { type: "string", minLength: 1 },
+    description: { type: "string", minLength: 1 },
     images: { type: "array", items: { type: "string" } },
-    date: { type: "string" },
+    date: { type: ["string", "date"] },
   },
 };
 
