@@ -7,6 +7,7 @@ const postSchema: Schema = {
     title: { type: "string", minLength: 6 },
     description: { type: "string", minLength: 6 },
     images: { type: "array", items: { type: "string" } },
+    date: { type: "string" },
   },
 };
 
