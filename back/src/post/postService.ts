@@ -22,7 +22,7 @@ async function getPostById(id_post: number) {
          g.id_image, 
          g.image_name 
        FROM post p 
-       JOIN image g ON p.id = g.id_post
+       LEFT JOIN image g ON p.id = g.id_post
        JOIN post_type pt ON pt.id_post_type = p.id_type
        WHERE p.id = $1;`,
       [id_post]
